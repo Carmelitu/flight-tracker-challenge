@@ -3,6 +3,14 @@ import axios from 'axios';
 // Configurable base URL - can be overridden via environment variable
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001';
 
+// Global flag to track logout state and prevent unnecessary refresh attempts
+let isLoggingOut = false;
+
+// Export function to set logout state
+export const setLoggingOut = (state: boolean) => {
+  isLoggingOut = state;
+};
+
 export const apiClient = axios.create({
   baseURL: `${BASE_URL}/api`,
   headers: {
@@ -49,6 +57,12 @@ apiClient.interceptors.response.use(
         return Promise.reject(error);
       }
 
+      // Don't try to refresh if we're in the middle of a logout process
+      if (isLoggingOut) {
+        console.log('[API] Logout in progress, not attempting refresh');
+        return Promise.reject(error);
+      }
+
       originalRequest._retry = true;
       
       try {
@@ -63,6 +77,9 @@ apiClient.interceptors.response.use(
         // Refresh failed, call logout and redirect
         console.error('[API] Token refresh failed:', refreshError);
         
+        // Set logout flag to prevent further refresh attempts
+        isLoggingOut = true;
+        
         try {
           // Call logout endpoint before redirecting
           await apiClient.post('/auth/logout');
@@ -72,7 +89,9 @@ apiClient.interceptors.response.use(
         
         // Dispatch logout event for AuthContext
         if (window.location.pathname !== '/login') {
-          window.dispatchEvent(new CustomEvent('auth:logout'));
+          window.dispatchEvent(new CustomEvent('auth:logout', { 
+            detail: { sessionExpired: true } 
+          }));
         }
         
         return Promise.reject(new Error('Session expired'));

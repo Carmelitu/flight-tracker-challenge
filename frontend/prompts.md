@@ -40,3 +40,25 @@ Requirements:
    - Delete and refresh actions should also use `useMutation` with automatic refetch.
 6. Ensure TypeScript types from the backend (Flight interface) are shared with the frontend to avoid duplication.
 7. Keep the code modular: hooks in a `/hooks` directory, API calls in a `/services` directory.
+
+# 3
+Add a simple toast component with its corresponding provider in the frontend React app to display information to the user.  
+
+Requirements: 
+- Create a `ToastProvider` and `useToast` hook to trigger notifications globally.  
+- Notifications should appear in the top-right corner, auto-dismiss after a few seconds, and have a close button for manual dismissal.  
+- Support at least two styles: success (green background) and error (red background).  
+- Keep the implementation library-free (no external toast libraries), use TailwindCSS or minimal inline CSS.  
+- The toast component must be reusable across the app.  
+
+Show toast messages for these cases:  
+1. Successful Login → `"Welcome back!"`  
+2. Logout → `"You have been logged out."`  
+3. Expired Session Logout (triggered when refresh token flow fails) → `"Session expired. Please log in again."`  
+4. Created flight → `"Flight created successfully."`  
+5. Refreshed flight → `"Flight data refreshed."`  
+6. Deleted flight → `"Flight deleted successfully."`  
+
+Integration:  
+- Integrate the toast calls in the existing auth and flight logic.  
+- Ensure the toast is triggered only after the action is confirmed successful.  
