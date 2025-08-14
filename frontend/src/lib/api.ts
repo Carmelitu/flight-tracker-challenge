@@ -9,11 +9,15 @@ export const apiClient = axios.create({
     'Content-Type': 'application/json',
   },
   timeout: 10000, // 10 seconds timeout
+  withCredentials: true, // Always send cookies for authentication
 });
 
-// Request interceptor for logging (development only)
+// Request interceptor for logging and ensuring withCredentials
 apiClient.interceptors.request.use(
   (config) => {
+    // Ensure withCredentials is always true for all requests
+    config.withCredentials = true;
+    
     if (import.meta.env.DEV) {
       console.log(`[API] ${config.method?.toUpperCase()} ${config.url}`);
     }
@@ -25,14 +29,54 @@ apiClient.interceptors.request.use(
   }
 );
 
-// Response interceptor for error handling
+// Response interceptor for error handling and automatic token refresh
 apiClient.interceptors.response.use(
   (response) => {
     return response;
   },
-  (error) => {
+  async (error) => {
+    const originalRequest = error.config;
+    
     if (import.meta.env.DEV) {
       console.error('[API] Response error:', error.response?.data || error.message);
+    }
+    
+    // If we get a 401 and haven't already tried to refresh this request
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      // Don't try to refresh on logout or refresh requests to avoid loops
+      if (originalRequest.url?.includes('/auth/logout') || originalRequest.url?.includes('/auth/refresh')) {
+        console.log('[API] Auth endpoint failed, not retrying');
+        return Promise.reject(error);
+      }
+
+      originalRequest._retry = true;
+      
+      try {
+        // Try to refresh the token
+        const refreshResponse = await apiClient.post('/auth/refresh');
+        
+        if (refreshResponse.status === 200) {
+          // Refresh successful, retry the original request
+          return apiClient(originalRequest);
+        }
+      } catch (refreshError) {
+        // Refresh failed, call logout and redirect
+        console.error('[API] Token refresh failed:', refreshError);
+        
+        try {
+          // Call logout endpoint before redirecting
+          await apiClient.post('/auth/logout');
+        } catch (logoutError) {
+          console.error('[API] Logout failed:', logoutError);
+        }
+        
+        // Dispatch logout event for AuthContext
+        if (window.location.pathname !== '/login') {
+          window.dispatchEvent(new CustomEvent('auth:logout'));
+        }
+        
+        return Promise.reject(new Error('Session expired'));
+      }
     }
     
     // Handle common HTTP errors
