@@ -6,9 +6,9 @@ import { z } from 'zod';
  */
 export const createFlightSchema = z.object({
   flightNumber: z.string()
+    .trim()
     .min(1, 'Flight number is required')
     .max(10, 'Flight number must be at most 10 characters')
-    .trim()
 });
 
 export type CreateFlightSchemaType = z.infer<typeof createFlightSchema>;
