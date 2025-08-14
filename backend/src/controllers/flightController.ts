@@ -1,6 +1,9 @@
 import { Request, Response } from 'express';
 import * as flightService from '../services/flightService';
 import { CreateFlightRequest } from '../types/flight';
+import { ValidatedRequest } from '../middleware/validateRequest';
+import { CreateFlightSchemaType } from '../schemas/flight.create.schema';
+import { DeleteFlightSchemaType } from '../schemas/flight.delete.schema';
 
 export async function getAllFlights(req: Request, res: Response): Promise<void> {
   try {
@@ -11,14 +14,10 @@ export async function getAllFlights(req: Request, res: Response): Promise<void> 
   }
 }
 
-export async function createFlight(req: Request<{}, {}, CreateFlightRequest>, res: Response): Promise<void> {
+export async function createFlight(req: ValidatedRequest, res: Response): Promise<void> {
   try {
-    const { flightNumber } = req.body;
-
-    if (!flightNumber || typeof flightNumber !== 'string') {
-      res.status(400).json({ error: 'Flight number is required and must be a string' });
-      return;
-    }
+    // Data has already been validated by middleware, so we can safely use it
+    const { flightNumber }: CreateFlightSchemaType = req.validatedData;
 
     const flight = flightService.createFlight(flightNumber);
     res.status(201).json(flight);
@@ -27,14 +26,10 @@ export async function createFlight(req: Request<{}, {}, CreateFlightRequest>, re
   }
 }
 
-export async function deleteFlight(req: Request<{ id: string }>, res: Response): Promise<void> {
+export async function deleteFlight(req: ValidatedRequest, res: Response): Promise<void> {
   try {
-    const { id } = req.params;
-
-    if (!id) {
-      res.status(400).json({ error: 'Flight ID is required' });
-      return;
-    }
+    // Data has already been validated by middleware, so we can safely use it
+    const { id }: DeleteFlightSchemaType = req.validatedData;
 
     const deleted = flightService.deleteFlight(id);
     
