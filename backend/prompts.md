@@ -38,7 +38,7 @@ Create a basic Express.js backend with TypeScript for a flight tracker applicati
    - For now, return hardcoded or randomly generated mock data.  
 
 5. Middleware  
-   - Use cors for cross-origin requests from the React frontend (http://localhost:3000).  
+   - Use cors for cross-origin requests from the React frontend (http://localhost:8080).  
    - Use express.json() for JSON body parsing.  
 
 6. Code style  
@@ -87,3 +87,29 @@ Requirements:
 
 Reference flights service code:
 @flightService.ts 
+
+# 3
+Add authentication to the existing Express + TypeScript backend.
+
+Requirements:
+1. Use express, cookie-parser, jsonwebtoken, and express-async-handler.
+2. Auth endpoints:
+   - POST /auth/login → Accepts username and password. Validate against a single in-memory user: username = "admin", password = "admin".
+     - On success: create a short-lived access token (JWT, expires in 15 min) and a long-lived refresh token (JWT, expires in 7 days).
+     - Store both tokens in HTTP-only cookies (`accessToken` and `refreshToken`).
+   - POST /auth/logout → Clear both cookies.
+   - GET /auth/me → Returns the authenticated user’s info (mocked).
+   - POST /auth/refresh → Validates refresh token from cookie, generates a new access token, and sets it in the cookie.
+3. Middleware:
+   - `authMiddleware` → Validates access token from `accessToken` cookie. If invalid/expired, reject with 401.
+   - Apply middleware to protect all flight endpoints (`/flights` and related).
+4. Token details:
+   - Use a hardcoded secret for simplicity.
+   - Use cookie options: httpOnly: true, secure: false (for local dev).
+5. No database → The only valid user is { username: "admin", password: "admin" } stored in code.
+6. TypeScript types for User and AuthResponse.
+7. Clean modular structure:
+   - `/services/authService.ts` → Handles token creation/validation.
+   - `/middleware/authMiddleware.ts` → Handles access token checking.
+   - `/routes/authRoutes.ts` → Handles auth endpoints.
+   - `/types/auth.ts` → Holds related interfaces.
