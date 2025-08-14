@@ -1,11 +1,51 @@
 import React from 'react';
 import { Plane } from 'lucide-react';
-import { useFlights } from '@/hooks/useFlights';
+import { useFlights } from '@/hooks/useFlightsQuery';
 import { FlightForm } from './FlightForm';
 import { FlightTable } from './FlightTable';
 
 const FlightTracker = () => {
-  const { flights, addFlight, deleteFlight, refreshFlights } = useFlights();
+  const { 
+    flights, 
+    isLoading, 
+    error, 
+    addFlight, 
+    deleteFlight, 
+    refreshFlights,
+    isCreating,
+    isDeleting,
+    isRefreshing
+  } = useFlights();
+
+  // Handle loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
+        <div className="text-center">
+          <Plane className="w-12 h-12 text-yellow-500 animate-pulse mx-auto mb-4" />
+          <p className="text-lg">Loading flights...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Handle error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-red-500 text-6xl mb-4">⚠️</div>
+          <h2 className="text-2xl font-bold mb-2">Connection Error</h2>
+          <p className="text-gray-400 mb-4">
+            Unable to connect to the flight tracking service.
+          </p>
+          <p className="text-sm text-gray-500">
+            Please make sure the backend server is running on port 5001.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
@@ -20,15 +60,20 @@ const FlightTracker = () => {
           </p>
         </header>
 
-        <FlightForm onAddFlight={addFlight} />
+        <FlightForm 
+          onAddFlight={addFlight} 
+          isLoading={isCreating}
+        />
         <FlightTable 
           flights={flights}
           onDeleteFlight={deleteFlight}
           onRefreshFlights={refreshFlights}
+          isDeleting={isDeleting}
+          isRefreshing={isRefreshing}
         />
 
         <footer className="text-center mt-8 text-gray-500 text-sm">
-          Flight data is simulated for demonstration purposes
+          Connected to live flight tracking API
         </footer>
       </div>
     </div>

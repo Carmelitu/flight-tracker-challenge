@@ -3,15 +3,23 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
 interface FlightFormProps {
-  onAddFlight: (flightNumber: string) => void;
+  onAddFlight: (flightNumber: string) => Promise<void>;
+  isLoading?: boolean;
 }
 
-export const FlightForm: React.FC<FlightFormProps> = ({ onAddFlight }) => {
+export const FlightForm: React.FC<FlightFormProps> = ({ onAddFlight, isLoading = false }) => {
   const [flightNumber, setFlightNumber] = useState('');
 
-  const handleSubmit = () => {
-    onAddFlight(flightNumber);
-    setFlightNumber('');
+  const handleSubmit = async () => {
+    if (!flightNumber.trim() || isLoading) return;
+    
+    try {
+      await onAddFlight(flightNumber);
+      setFlightNumber('');
+    } catch (error) {
+      // Error handling is done in the hook
+      console.error('Failed to add flight:', error);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -36,8 +44,12 @@ export const FlightForm: React.FC<FlightFormProps> = ({ onAddFlight }) => {
           />
         </div>
         <div className="flex items-end">
-          <Button onClick={handleSubmit} className="bg-yellow-500 hover:bg-yellow-600 text-black font-medium">
-            Add Flight
+          <Button 
+            onClick={handleSubmit} 
+            disabled={isLoading || !flightNumber.trim()}
+            className="bg-yellow-500 hover:bg-yellow-600 text-black font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isLoading ? 'Adding...' : 'Add Flight'}
           </Button>
         </div>
       </div>

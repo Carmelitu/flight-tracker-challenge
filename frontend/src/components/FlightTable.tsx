@@ -1,12 +1,14 @@
 import React from 'react';
 import { Trash2, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Flight, FlightStatus } from '@/hooks/useFlights';
+import { Flight, FlightStatus } from '@/types/flight';
 
 interface FlightTableProps {
   flights: Flight[];
   onDeleteFlight: (id: string) => void;
   onRefreshFlights: () => void;
+  isDeleting?: boolean;
+  isRefreshing?: boolean;
 }
 
 const getStatusColor = (status: FlightStatus) => {
@@ -21,17 +23,20 @@ const getStatusColor = (status: FlightStatus) => {
 export const FlightTable: React.FC<FlightTableProps> = ({ 
   flights, 
   onDeleteFlight, 
-  onRefreshFlights 
+  onRefreshFlights,
+  isDeleting = false,
+  isRefreshing = false
 }) => {
   return (
     <>
       <div className="flex justify-end mb-4">
         <Button 
-          onClick={onRefreshFlights} 
-          className="bg-gray-700 hover:bg-gray-600 text-white flex items-center gap-2"
+          onClick={onRefreshFlights}
+          disabled={isRefreshing}
+          className="bg-gray-700 hover:bg-gray-600 text-white flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <RotateCcw className="w-4 h-4" />
-          Refresh All
+          <RotateCcw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+          {isRefreshing ? 'Refreshing...' : 'Refresh All'}
         </Button>
       </div>
 
@@ -64,17 +69,18 @@ export const FlightTable: React.FC<FlightTableProps> = ({
                       </span>
                     </td>
                     <td className="py-4 px-6 font-mono text-gray-300">
-                      {flight.departureTime || '—'}
+                      {flight.actualDepartureTime || '—'}
                     </td>
                     <td className="py-4 px-6 font-mono text-gray-300">
-                      {flight.arrivalTime || '—'}
+                      {flight.actualArrivalTime || '—'}
                     </td>
                     <td className="py-4 px-6 text-center">
                       <Button
                         onClick={() => onDeleteFlight(flight.id)}
                         variant="ghost"
-                        className="text-destructive hover:bg-destructive/10"
+                        className="text-destructive hover:bg-destructive/10 disabled:opacity-50"
                         size="sm"
+                        disabled={isDeleting}
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
